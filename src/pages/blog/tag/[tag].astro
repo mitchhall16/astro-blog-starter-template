@@ -1,0 +1,71 @@
+---
+import BaseHead from '../../../components/BaseHead.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import FormattedDate from '../../../components/FormattedDate.astro';
+import { SITE_TITLE } from '../../../consts';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('blog')).filter((p) => !p.data.draft);
+  const set = new Set<string>();
+  for (const p of posts) for (const t of (p.data.tags ?? [])) set.add(t);
+  return [...set].map((tag) => ({ params: { tag: encodeURIComponent(tag) } }));
+}
+
+const raw = Astro.params.tag ?? '';
+const tag = decodeURIComponent(raw);
+
+const posts = (await getCollection('blog'))
+  .filter((p) => !p.data.draft)
+  .filter((p) => (p.data.tags ?? []).includes(tag))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`#${tag} | ${SITE_TITLE}`} description={`Posts tagged ${tag}.`} />
+  </head>
+  <body>
+    <Header />
+    <main class="container" style="padding-top: 1.2rem;">
+      <section class="hero" style="padding: 1.4rem;">
+        <div class="pill">#{tag}</div>
+        <h1 class="hero-title" style="margin:.6rem 0 0 0;">
+          <span class="glitch" data-text={`Tag: ${tag}`}>Tag: {tag}</span>
+        </h1>
+        <p class="hero-sub" style="margin:.55rem 0 0 0;">
+          {posts.length} post{posts.length === 1 ? '' : 's'}.
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="/blog">← Blog</a>
+          <a class="btn" href="/blog/tags">All tags</a>
+        </div>
+      </section>
+
+      <section style="margin-top: 1.2rem;">
+        <div class="grid">
+          {posts.map((post) => (
+            <article class="surface card post-card">
+              <a class="card-link" href={`/blog/${post.slug}`}>
+                <h3 class="card-title" style="margin-bottom:.35rem;">
+                  {post.data.title}
+                </h3>
+                <p class="card-desc">{post.data.description}</p>
+                <div class="meta">
+                  <FormattedDate date={post.data.pubDate} />
+                  <div class="meta-right">
+                    {post.data.featured && <span class="pill">Featured</span>}
+                    {post.data.updatedDate && <span class="pill">Updated</span>}
+                  </div>
+                </div>
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+    <Footer />
+  </body>
+</html>

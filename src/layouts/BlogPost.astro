@@ -7,79 +7,68 @@ import FormattedDate from '../components/FormattedDate.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, tags = [], featured } = Astro.props as Props;
 ---
 
 <html lang="en">
-	<head>
-		<BaseHead title={title} description={description} />
-		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
-			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 {
-				margin: 0 0 0.5em 0;
-			}
-			.date {
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
-			}
-			.last-updated-on {
-				font-style: italic;
-			}
-		</style>
-	</head>
+  <head>
+    <BaseHead title={title} description={description} image={heroImage} />
+  </head>
+  <body>
+    <Header />
 
-	<body>
-		<Header />
-		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <img width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						<hr />
-					</div>
-					<slot />
-				</div>
-			</article>
-		</main>
-		<Footer />
-	</body>
+    <main>
+      <article class="container" style="padding-top: 1.2rem;">
+        <header class="surface card hero" style="padding: 1.6rem;">
+          <div style="display:flex; flex-wrap:wrap; gap:.6rem; align-items:center;">
+            <a class="pill" href="/blog">← Back</a>
+            {featured && <span class="pill">⚡ Featured</span>}
+            {updatedDate && <span class="pill">Updated</span>}
+          </div>
+
+          <h1 class="hero-title" style="margin:.9rem 0 0 0;">
+            <span class="glitch" data-text={title}>{title}</span>
+          </h1>
+
+          <p class="hero-sub" style="margin:.55rem 0 0 0;">{description}</p>
+
+          <div class="text-muted" style="margin-top: .85rem;">
+            <FormattedDate date={pubDate} />
+            {updatedDate && (
+              <span> · updated <FormattedDate date={updatedDate} /></span>
+            )}
+          </div>
+
+          {tags?.length ? (
+            <div class="tags">
+              {tags.map((tag) => (
+                <a class="tag" href={`/blog/tag/${encodeURIComponent(tag)}`}>#{tag}</a>
+              ))}
+            </div>
+          ) : null}
+
+          {heroImage && (
+            <div style="margin-top: 1.1rem;">
+              <img
+                src={heroImage}
+                alt={title}
+                style="width:100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 16px;"
+                loading="eager"
+              />
+            </div>
+          )}
+        </header>
+
+        <div class="surface card prose" style="margin-top: 1.1rem; padding: 1.4rem;">
+          <slot />
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <a class="btn" href="/blog">← Back to blog</a>
+        </div>
+      </article>
+    </main>
+
+    <Footer />
+  </body>
 </html>

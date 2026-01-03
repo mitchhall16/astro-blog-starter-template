@@ -6,106 +6,129 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { getCollection } from 'astro:content';
 import FormattedDate from '../../components/FormattedDate.astro';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const all = await getCollection('blog');
+const posts = all
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const featured =
+  posts.find((p) => p.data.featured) ?? posts[0];
+
+const rest = posts.filter((p) => p.id !== featured?.id);
 ---
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									<img width={720} height={360} src={post.data.heroImage} alt="" />
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</section>
-		</main>
-		<Footer />
-	</body>
+  <head>
+    <BaseHead title={`Blog | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+  </head>
+
+  <body>
+    <Header />
+
+    <main>
+      <section class="container hero" style="padding: 1.8rem;">
+        <div class="featured-grid">
+          <div>
+            <div class="pill" style="display:inline-flex; gap:.5rem; align-items:center;">
+              <span>⚡ Featured</span>
+              <a class="pill" href="/blog/tags" style="margin-left:.35rem;">Browse tags</a>
+            </div>
+
+            <h1 class="hero-title" style="margin-top:.85rem;">
+              <span class="glitch" data-text={featured?.data.title ?? 'Latest posts'}>
+                {featured?.data.title ?? 'Latest posts'}
+              </span>
+            </h1>
+
+            <p class="hero-sub" style="margin-top:.5rem;">
+              {featured?.data.description ?? 'Fresh ideas, experiments, and builds.'}
+            </p>
+
+            {featured && (
+              <div class="tags">
+                {featured.data.tags?.slice(0, 6).map((tag) => (
+                  <a class="tag" href={`/blog/tag/${encodeURIComponent(tag)}`}>#{tag}</a>
+                ))}
+              </div>
+            )}
+
+            <div class="hero-actions">
+              {featured && (
+                <a class="btn primary" href={`/blog/${featured.slug}`}>
+                  Read featured →
+                </a>
+              )}
+              <a class="btn" href="/rss.xml">RSS</a>
+            </div>
+          </div>
+
+          <div class="surface card post-card" style="align-self:stretch;">
+            {featured?.data.heroImage ? (
+              <img
+                src={featured.data.heroImage}
+                alt={featured.data.title}
+                style="width:100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 16px;"
+                loading="eager"
+              />
+            ) : (
+              <div class="surface" style="width:100%; aspect-ratio: 16 / 10; border-radius: 16px; display:grid; place-items:center;">
+                <span class="text-muted">No hero image — add <code>heroImage</code> in frontmatter</span>
+              </div>
+            )}
+
+            <div style="padding-top: .9rem;">
+              {featured && (
+                <p class="text-muted" style="margin:0;">
+                  <FormattedDate date={featured.data.pubDate} />
+                  {featured.data.updatedDate && <span> · updated</span>}
+                </p>
+              )}
+              <p style="margin:.45rem 0 0 0; color: rgba(var(--text), .92);">
+                A quick launchpad to the best post right now — with futuristic transitions + glitch glow.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="container" style="margin-top: 1.4rem;">
+        <div class="section-title">
+          <h2 style="margin:0;">All posts</h2>
+          <span class="text-muted">{posts.length} total</span>
+        </div>
+
+        <div class="grid">
+          {rest.map((post) => (
+            <article class="surface card post-card">
+              <a class="card-link" href={`/blog/${post.slug}`}>
+                <h3 class="card-title" style="margin-bottom:.35rem;">
+                  {post.data.title}
+                </h3>
+                <p class="card-desc">{post.data.description}</p>
+
+                <div class="meta">
+                  <FormattedDate date={post.data.pubDate} />
+                  <div class="meta-right">
+                    {post.data.featured && <span class="pill">Featured</span>}
+                    {post.data.updatedDate && <span class="pill">Updated</span>}
+                  </div>
+                </div>
+
+                {post.data.tags?.length ? (
+                  <div class="tags">
+                    {post.data.tags.slice(0, 4).map((tag) => (
+                      <span class="tag">#{tag}</span>
+                    ))}
+                  </div>
+                ) : null}
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+
+    <Footer />
+  </body>
 </html>

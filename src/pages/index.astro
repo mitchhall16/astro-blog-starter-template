@@ -3,48 +3,110 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { getCollection } from 'astro:content';
+import FormattedDate from '../components/FormattedDate.astro';
+
+const posts = (await getCollection('blog'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const featured = posts.find((p) => p.data.featured) ?? posts[0];
+const latest = posts.filter((p) => p.id !== featured?.id).slice(0, 3);
 ---
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to <a href="https://docs.astro.build/"
-					>read the docs
-				</a> or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out <a
-					href="https://github.com/Charca/astro-blog-template"
-					>astro-blog-template
-				</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
-		<Footer />
-	</body>
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <Header />
+
+    <main>
+      <section class="container hero" style="padding: 2.1rem; margin-top: 1rem;">
+        <div class="pill">⚡ Futuristic Astro + Cloudflare</div>
+        <h1 class="hero-title" style="margin: .9rem 0 0 0;">
+          <span class="glitch" data-text={SITE_TITLE}>{SITE_TITLE}</span>
+        </h1>
+        <p class="hero-sub" style="margin:.65rem 0 0 0;">
+          {SITE_DESCRIPTION}
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn primary" href="/blog">Enter the blog →</a>
+          <a class="btn" href="/blog/tags">Browse tags</a>
+          <a class="btn" href="/admin">Admin</a>
+        </div>
+
+        {featured && (
+          <div class="surface card post-card" style="margin-top: 1.25rem;">
+            <div class="pill">Featured</div>
+            <h2 style="margin:.65rem 0 0 0;">
+              <a href={`/blog/${featured.slug}`} style="text-decoration:none; color:inherit;">
+                {featured.data.title}
+              </a>
+            </h2>
+            <p class="text-muted" style="margin:.4rem 0 0 0;">
+              <FormattedDate date={featured.data.pubDate} />
+            </p>
+            <p style="margin:.55rem 0 0 0;">{featured.data.description}</p>
+            {featured.data.tags?.length ? (
+              <div class="tags">
+                {featured.data.tags.slice(0, 6).map((t) => (
+                  <a class="tag" href={`/blog/tag/${encodeURIComponent(t)}`}>#{t}</a>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        )}
+      </section>
+
+      <section class="container" style="margin-top: 1.4rem;">
+        <div class="section-title">
+          <h2 style="margin:0;">Latest</h2>
+          <a class="pill" href="/blog">View all →</a>
+        </div>
+
+        <div class="grid">
+          {latest.map((post) => (
+            <article class="surface card post-card">
+              <a class="card-link" href={`/blog/${post.slug}`}>
+                <h3 class="card-title" style="margin-bottom:.35rem;">
+                  {post.data.title}
+                </h3>
+                <p class="card-desc">{post.data.description}</p>
+                <div class="meta">
+                  <FormattedDate date={post.data.pubDate} />
+                  <div class="meta-right">
+                    {post.data.featured && <span class="pill">Featured</span>}
+                    {post.data.updatedDate && <span class="pill">Updated</span>}
+                  </div>
+                </div>
+                {post.data.tags?.length ? (
+                  <div class="tags">
+                    {post.data.tags.slice(0, 4).map((t) => (
+                      <span class="tag">#{t}</span>
+                    ))}
+                  </div>
+                ) : null}
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section class="container" style="margin-top: 1.4rem;">
+        <div class="surface card">
+          <h2 style="margin-top:0;">How to add a post (easy)</h2>
+          <ol style="margin: .5rem 0 0 1.1rem; color: rgba(var(--text), .92);">
+            <li>Create a new <code>.md</code> file in <code>src/content/blog</code>.</li>
+            <li>Add frontmatter: <code>title</code>, <code>description</code>, <code>pubDate</code>, plus optional <code>tags</code>, <code>featured</code>.</li>
+            <li>Commit to GitHub — Cloudflare Pages redeploys automatically.</li>
+          </ol>
+        </div>
+      </section>
+    </main>
+
+    <Footer />
+  </body>
 </html>

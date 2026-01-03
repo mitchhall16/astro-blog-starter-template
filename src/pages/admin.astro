@@ -1,0 +1,74 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { GITHUB_REPO_URL, SITE_TITLE } from '../consts';
+
+const repo = GITHUB_REPO_URL?.trim();
+const newPostUrl = repo ? `${repo}/new/main/src/content/blog?filename=new-post.md` : '';
+const postsFolderUrl = repo ? `${repo}/tree/main/src/content/blog` : '';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`${SITE_TITLE} | Admin`} description="Owner-only shortcuts (protect this route with Cloudflare Access)." />
+  </head>
+  <body>
+    <Header />
+    <main class="container" style="padding-top: 1.2rem;">
+      <section class="hero" style="padding: 1.4rem;">
+        <div class="pill">🔒 Protect /admin with Cloudflare Access</div>
+        <h1 class="hero-title" style="margin:.65rem 0 0 0;">
+          <span class="glitch" data-text="Admin console">Admin console</span>
+        </h1>
+        <p class="hero-sub" style="margin:.55rem 0 0 0;">
+          Easiest workflow: create Markdown files in <code>src/content/blog</code> and push to GitHub.
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="/blog">← Blog</a>
+          <a class="btn" href="/blog/tags">Tags</a>
+        </div>
+      </section>
+
+      <section style="margin-top: 1.2rem;">
+        {repo ? (
+          <div class="surface card">
+            <h2 style="margin-top:0;">GitHub shortcuts</h2>
+            <div class="hero-actions">
+              <a class="btn primary" href={newPostUrl} target="_blank">New post (GitHub)</a>
+              <a class="btn" href={postsFolderUrl} target="_blank">Posts folder</a>
+            </div>
+            <p class="text-muted" style="margin: .85rem 0 0 0;">
+              Tip: name files like <code>2026-01-02-my-post.md</code> so it stays organized.
+            </p>
+          </div>
+        ) : (
+          <div class="surface card">
+            <h2 style="margin-top:0;">Enable GitHub buttons</h2>
+            <p class="text-muted" style="margin:0;">
+              Set <code>GITHUB_REPO_URL</code> in <code>src/consts.ts</code> (example: <code>https://github.com/you/your-repo</code>)
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section style="margin-top: 1.2rem;">
+        <div class="surface card">
+          <h2 style="margin-top:0;">Post template (copy/paste)</h2>
+          <pre class="surface" style="padding: 1rem; border-radius: 14px; overflow:auto;"><code>---
+title: "My futuristic post"
+description: "One sentence that makes people click."
+pubDate: 2026-01-02
+featured: false
+tags: ["futuristic", "build-log"]
+heroImage: "/blog-placeholder-1.jpg"
+---
+
+Write in **Markdown**. This template keeps it dead simple.</code></pre>
+        </div>
+      </section>
+    </main>
+    <Footer />
+  </body>
+</html>
